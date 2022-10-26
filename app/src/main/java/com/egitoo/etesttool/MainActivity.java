@@ -1,53 +1,41 @@
 package com.egitoo.etesttool;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.IsoDep;
 import android.os.Bundle;
-import android.os.Handler;
-import android.renderscript.RenderScript;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.navigation.ui.AppBarConfiguration;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.egitoo.etesttool.databinding.ActivityMainBinding;
-
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Locale;
 
 
 
 public class MainActivity extends AppCompatActivity {
     Context context;
-    int versionCode = BuildConfig.VERSION_CODE;
     String versionName = BuildConfig.VERSION_NAME;
+    public static final String APP_PREFERENCES = "mysettings";
+    public static final String APP_PREFERENCES_COUNT = "Count";
 
-    public MainActivity() {}
-
-    public MainActivity(Context context) {
-        this.context = context;
-    }
+    String[] names = new String[] {"Егор", "Fahed", "Sany", "Молодец", "Красавчик", "Неудачник", "Лошара", "Вадим", "Миша", "Маша"};
 
     SharedPreferences mySharedPreferences;
     SharedPreferences.Editor editor;
+    ShowDialogFragment myDialogFragment;
     public TextView textView;
     public TextView versionView;
     public Button plus_But;
     public Button min_But;
     Integer count = 0;
+    boolean flag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        context = getApplicationContext();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.textView);
@@ -66,13 +54,16 @@ public class MainActivity extends AppCompatActivity {
             editor.apply();
         }
 
+        Thread thread = new CheckCount();
+        thread.start();
+
         updateText(String.format(Locale.ENGLISH,"Click: %d", count));
+
         plus_But.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                count = count + 1;
+                count++;
                 updateText(String.format(Locale.ENGLISH,"Click: %d", count));
-
                 editor.putInt(APP_PREFERENCES_COUNT, count);
                 editor.apply();
             }
@@ -81,9 +72,8 @@ public class MainActivity extends AppCompatActivity {
         min_But.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                count = count - 1;
+                count--;
                 updateText(String.format(Locale.ENGLISH,"Click: %d", count));
-
                 editor.putInt(APP_PREFERENCES_COUNT, count);
                 editor.apply();
             }
@@ -94,6 +84,30 @@ public class MainActivity extends AppCompatActivity {
         textView.setText(text);
     }
 
-    public static final String APP_PREFERENCES = "mysettings";
-    public static final String APP_PREFERENCES_COUNT = "Count";
+    class CheckCount extends Thread {
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    sleep(100);
+                } catch (InterruptedException e) {}
+                if (count % 100 == 0 && !flag) {
+                    flag = true;
+                    myDialogFragment = new ShowDialogFragment();
+                    myDialogFragment.setText(String.format(Locale.ENGLISH, "%s вы достигли: %d !!!",names[getRandomIntegerBetweenRange(0,9)], count));
+                    myDialogFragment.setTextButton("Погнали!!!");
+                    FragmentManager manager = getSupportFragmentManager();
+                    FragmentTransaction transaction = manager.beginTransaction();
+                    myDialogFragment.show(transaction, "dialog");
+                } else if(count % 100 != 0) {
+                    flag = false;
+                }
+            }
+        }
+    }
+
+    public static int getRandomIntegerBetweenRange(int min, int max){
+        int x = (int)(Math.random()*((max-min)+1))+min;
+        return x;
+    }
 }
