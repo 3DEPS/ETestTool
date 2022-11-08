@@ -1,7 +1,6 @@
 package com.egitoo.etesttool;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,96 +17,104 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
     Context context;
     String versionName = BuildConfig.VERSION_NAME;
-    public static final String APP_PREFERENCES = "mysettings";
-    public static final String APP_PREFERENCES_COUNT = "Count";
+    private static final String APP_PREFERENCES = "mysettings";
+    com.egitoo.etesttool.CountPreferences preferences;
 
-    String[] names = new String[] {"Егор", "Fahed", "Sany", "Молодец", "Красавчик", "Неудачник", "Лошара", "Вадим", "Миша", "Маша"};
+    String currentPlayer;
 
-    SharedPreferences mySharedPreferences;
-    SharedPreferences.Editor editor;
-    ShowDialogFragment myDialogFragment;
-    public TextView textView;
-    public TextView versionView;
-    public Button plus_But;
-    public Button min_But;
-    Integer count = 0;
-    boolean flag = false;
+    ShowDialogFragment successDialog;
+    NewPlayerDialogFragment newPlayerDialog;
+    public TextView title;
+    public Button newPlayer_Bt;
+    public Button startGame_Bt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         context = getApplicationContext();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        textView = findViewById(R.id.textView);
-        versionView = findViewById(R.id.version);
-        versionView.setText(versionName);
-        min_But = (Button) findViewById(R.id.minus_button);
-        plus_But = (Button) findViewById(R.id.plus_button);
+        setContentView(R.layout.main_menu);
+        title = findViewById(R.id.titleApp);
 
-        mySharedPreferences = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
-        editor = mySharedPreferences.edit();
+        newPlayer_Bt = (Button) findViewById(R.id.newPlayer);
+        startGame_Bt = (Button) findViewById(R.id.startGame);
 
-        if(mySharedPreferences.contains(APP_PREFERENCES_COUNT)) {
-            count = mySharedPreferences.getInt(APP_PREFERENCES_COUNT, 0);
-        } else {
-            editor.putInt(APP_PREFERENCES_COUNT, count);
-            editor.apply();
+        preferences = new CountPreferences(getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
+
+        //First init
+        if(preferences.isEmpty()){
+            newPlayerDialog = new NewPlayerDialogFragment();
+            FragmentManager manager = getSupportFragmentManager();
+            FragmentTransaction transaction = manager.beginTransaction();
+            successDialog.show(transaction, "dialog");
         }
 
-        Thread thread = new CheckCount();
-        thread.start();
-
-        updateText(String.format(Locale.ENGLISH,"Click: %d", count));
-
-        plus_But.setOnClickListener(new View.OnClickListener() {
+        //Button listener
+        newPlayer_Bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                count++;
-                updateText(String.format(Locale.ENGLISH,"Click: %d", count));
-                editor.putInt(APP_PREFERENCES_COUNT, count);
-                editor.apply();
+                newPlayerDialog = new NewPlayerDialogFragment();
+                FragmentManager manager = getSupportFragmentManager();
+                FragmentTransaction transaction = manager.beginTransaction();
+                newPlayerDialog.show(transaction, "dialog");
             }
         });
-
-        min_But.setOnClickListener(new View.OnClickListener() {
+        startGame_Bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                count--;
-                updateText(String.format(Locale.ENGLISH,"Click: %d", count));
-                editor.putInt(APP_PREFERENCES_COUNT, count);
-                editor.apply();
+                String[] result = preferences.getAllPlayer().keySet().toArray(new String[0]);
+                ListDialogFragment playersDialog = new ListDialogFragment();
+                playersDialog.setList(result);
+                FragmentManager manager = getSupportFragmentManager();
+                FragmentTransaction transaction = manager.beginTransaction();
+                playersDialog.show(transaction, "dialog");
             }
         });
     }
 
-    private void updateText (String text){
-        textView.setText(text);
-    }
-
-    class CheckCount extends Thread {
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    sleep(100);
-                } catch (InterruptedException e) {}
-                if (count % 100 == 0 && !flag) {
-                    flag = true;
-                    myDialogFragment = new ShowDialogFragment();
-                    myDialogFragment.setText(String.format(Locale.ENGLISH, "%s вы достигли: %d !!!",names[getRandomIntegerBetweenRange(0,9)], count));
-                    myDialogFragment.setTextButton("Погнали!!!");
-                    FragmentManager manager = getSupportFragmentManager();
-                    FragmentTransaction transaction = manager.beginTransaction();
-                    myDialogFragment.show(transaction, "dialog");
-                } else if(count % 100 != 0) {
-                    flag = false;
-                }
-            }
+    public void okClicked(String m_Text) {
+        try {
+            preferences.addPlayer(m_Text, 0);
+            currentPlayer = m_Text;
+        } catch (Exception e){
+            showDialogFragment("Ошибка", "Игрок " + m_Text + " уже существует", "Принято");
         }
     }
 
-    public static int getRandomIntegerBetweenRange(int min, int max){
-        int x = (int)(Math.random()*((max-min)+1))+min;
-        return x;
+    public void selectPlayerClicked(String player) {
+        currentPlayer = player;
     }
+
+//    class CheckCount extends Thread {
+//        @Override
+//        public void run() {
+//            while (true) {
+//                try {
+//                    sleep(100);
+//                } catch (InterruptedException e) {}
+//                if (count % 100 == 0 && !flag) {
+//                    flag = true;
+//                    showDialogFragment("Успех!!!",
+//                            String.format(Locale.ENGLISH, "%s вы достигли: %d !!!",currentPlayer, count),
+//                            "Погнали!!!");
+//                } else if(count % 100 != 0) {
+//                    flag = false;
+//                }
+//            }
+//        }
+//    }
+
+    void showDialogFragment(String title, String massage, String button){
+        successDialog = new ShowDialogFragment();
+        successDialog.setTitle(title);
+        successDialog.setText(massage);
+        successDialog.setTextButton(button);
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
+        successDialog.show(transaction, "dialog");
+    }
+
+//    public static int getRandomIntegerBetweenRange(int min, int max){
+//        int x = (int)(Math.random()*((max-min)+1))+min;
+//        return x;
+//    }
 }
