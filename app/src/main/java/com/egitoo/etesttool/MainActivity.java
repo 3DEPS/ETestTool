@@ -1,6 +1,7 @@
 package com.egitoo.etesttool;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -20,12 +21,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String APP_PREFERENCES = "mysettings";
     com.egitoo.etesttool.CountPreferences preferences;
 
+    Intent intent;
     String currentPlayer;
 
     ShowDialogFragment successDialog;
     NewPlayerDialogFragment newPlayerDialog;
     public TextView title;
     public Button newPlayer_Bt;
+    public Button selectPlayer_Bt;
     public Button startGame_Bt;
 
     @Override
@@ -37,7 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
         newPlayer_Bt = (Button) findViewById(R.id.newPlayer);
         startGame_Bt = (Button) findViewById(R.id.startGame);
+        selectPlayer_Bt = (Button) findViewById(R.id.playersGame);
 
+        intent = new Intent(this, GameActivity.class);
         preferences = new CountPreferences(getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
 
         //First init
@@ -58,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
                 newPlayerDialog.show(transaction, "dialog");
             }
         });
-        startGame_Bt.setOnClickListener(new View.OnClickListener() {
+        selectPlayer_Bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String[] result = preferences.getAllPlayer().keySet().toArray(new String[0]);
@@ -67,6 +72,18 @@ public class MainActivity extends AppCompatActivity {
                 FragmentManager manager = getSupportFragmentManager();
                 FragmentTransaction transaction = manager.beginTransaction();
                 playersDialog.show(transaction, "dialog");
+            }
+        });
+        startGame_Bt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                intent.putExtra("currentPlayer", currentPlayer);
+                try {
+                    intent.putExtra("count", preferences.getCount(currentPlayer));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                startActivity(intent);
             }
         });
     }
@@ -82,26 +99,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void selectPlayerClicked(String player) {
         currentPlayer = player;
+        title.setText("Hello " + currentPlayer + "!");
     }
-
-//    class CheckCount extends Thread {
-//        @Override
-//        public void run() {
-//            while (true) {
-//                try {
-//                    sleep(100);
-//                } catch (InterruptedException e) {}
-//                if (count % 100 == 0 && !flag) {
-//                    flag = true;
-//                    showDialogFragment("Успех!!!",
-//                            String.format(Locale.ENGLISH, "%s вы достигли: %d !!!",currentPlayer, count),
-//                            "Погнали!!!");
-//                } else if(count % 100 != 0) {
-//                    flag = false;
-//                }
-//            }
-//        }
-//    }
 
     void showDialogFragment(String title, String massage, String button){
         successDialog = new ShowDialogFragment();

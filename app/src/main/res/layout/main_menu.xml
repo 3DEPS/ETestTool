@@ -35,18 +35,18 @@
             android:text="New player" />
 
         <Button
-            android:id="@+id/startGame"
+            android:id="@+id/playersGame"
             android:layout_gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start Game" />
+            android:text="Select Player" />
 
         <Button
             android:id="@+id/startGame"
             android:layout_gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Rename player" />
+            android:text="START" />
     </LinearLayout>
 
     <TextView
